@@ -61,7 +61,7 @@ public:
     }
 
     // Retorna a distância percorrida pelo caminho inteiro.
-    float distanciaCaminho(vector<int> caminho)
+    float distanciaCaminho(vector<int> &caminho)
     {
         int i;
         float distanciaTotal = 0;
@@ -96,6 +96,56 @@ public:
     void setSeed(unsigned int seed) {
         PCVSolver::seed = seed;
         srand(seed);
+    }
+
+    // Retorna o índice do vizinho mais próximo de verticeAtual
+    // Retorna também o índice deste vizinho na lista de vértices disponíveis;
+    int vizinhoMaisProximo(int verticeAtual, vector<int> &idxVerticesDisponiveis, int &idxListaDisponiveis)
+    {
+        float distanciaCalc, tamanhoMenorAresta;
+        int idxMaisProximo;
+
+        // tamanhoMenorAresta inicialmente possui o maior valor de float possível
+        tamanhoMenorAresta = INF_POS;
+        for (int i = 0; i < (int)idxVerticesDisponiveis.size(); i++)
+        {
+            distanciaCalc = distancia(vertices[verticeAtual], vertices[idxVerticesDisponiveis[i]]);
+            if (distanciaCalc < tamanhoMenorAresta)
+            {
+                tamanhoMenorAresta = distanciaCalc;
+                idxMaisProximo = idxVerticesDisponiveis[i];
+                idxListaDisponiveis = i;
+            }
+        }
+        return idxMaisProximo;
+    }
+
+    // Aplica o algoritmo do vizinho mais próximo para o PCV.
+    // Retorna o caminho gerado em caminhoRetorno, e a distância do caminho em distanciaRetorno.
+    void solveVizinhoMaisProximo(int verticeInicial, vector<int> &caminhoRetorno, float &distanciaRetorno)
+    {
+        // Inicializa a lista de vértices disponíveis
+        vector<int> idxVerticesDisponiveis;
+        for (int i = 1; i <= numVertices; i++)
+        {
+            idxVerticesDisponiveis.push_back(i);
+        }
+        int idxMaisProximo, idxRemover;
+        caminhoRetorno = vector<int>(0);
+        distanciaRetorno = 0;
+
+        int idxVerticeAtual = verticeInicial;
+        remover(idxVerticeAtual - 1, idxVerticesDisponiveis);
+        while (idxVerticesDisponiveis.size() > 0)
+        {
+            caminhoRetorno.push_back(idxVerticeAtual);
+            // Seleciona o vizinho mais próximo
+            idxMaisProximo = vizinhoMaisProximo(idxVerticeAtual, idxVerticesDisponiveis, idxRemover);
+            idxVerticeAtual = idxMaisProximo;
+            remover<int>(idxRemover, idxVerticesDisponiveis);
+        }
+        caminhoRetorno.push_back(idxVerticeAtual);
+        distanciaRetorno = distanciaCaminho(caminhoRetorno);
     }
 
     float calculoCustoInsercao(vector<int> &ciclo, int i, int j, int k)
@@ -203,15 +253,22 @@ public:
         }
     }
 
-    // Gera a população inicial do algoritmo genético utilizando o random insertion.
+    // #######################################################
+    // TODO: Gera a população inicial do algoritmo genético utilizando o ???????????.
+    // #######################################################
     void gerarPopulacaoInicial(vector<vector<int>> &populacao, vector<float> &fitness){
         vector<int> caminhoRetorno;
         float distanciaRetorno;
 
         for(int i = 0; i < populacao.size(); i++){
-            solveRandomInsertion(caminhoRetorno, distanciaRetorno);
+            // solveRandomInsertion(caminhoRetorno, distanciaRetorno);
+
+            int verticeInicial = (rand() % numVertices) + 1;
+            solveVizinhoMaisProximo(verticeInicial, caminhoRetorno, distanciaRetorno);
+
             populacao[i] = caminhoRetorno;
             fitness[i] = distanciaRetorno;
+            // cout << "distancia " << i << ": " << fitness[i] << endl;
         }
     }
 
@@ -229,16 +286,16 @@ public:
         int i;
         float somaAtual = 0;
         float porcentagemAtual;
-        cout << "#####################" << endl;
-        cout << "size: " << fitness.size() << endl;
-        cout << "random: " << random << endl;
+        // cout << "#####################" << endl;
+        // cout << "size: " << fitness.size() << endl;
+        // cout << "random: " << random << endl;
         for(i = 0; i < fitness.size(); i++){
             somaAtual += fitness[i];
             porcentagemAtual = somaAtual/somaDistancias;
-            cout << "i " << i << ": " << porcentagemAtual << endl;
+            // cout << "i " << i << ": " << porcentagemAtual << endl;
             if (random < porcentagemAtual) break;
         }
-        cout << "escolhido: " << i << endl;
+        // cout << "escolhido: " << i << endl;
         return i;
     }
 
@@ -266,12 +323,106 @@ public:
         populacao = populacaoSelecionada;
     }
 
+    // Guarda os índices dos elementos de caminho em indices.
+    // Ex:  caminho = {1, 3, 5, 4, 2}
+    //      indices[5] contém o índice do elemento 5 => 2
+    // Assume que indices já tem espaço suficiente alocado.
+    void inicializaListaIndices(vector<int> &indices, vector<int> &caminho){
+        for(int i = 0; i < caminho.size(); i++){
+            indices[caminho[i]] = i;
+        }
+    }
+
+    // Aplica a operação de Order Crossover (OX1) em dois indivíduos pais
+    // para gerar dois filhos.
+    vector<vector<int>> orderCrossover(vector<int> &pai1, vector<int> &pai2){
+        vector<vector<int>> pais{pai1, pai2};
+        vector<vector<int>> filhos(2, vector<int>(numVertices, -1));
+        vector<vector<int>> indicesPais(2, vector<int>(numVertices + 1, -1));
+        vector<vector<bool>> filhoContem(2, vector<bool>(numVertices + 1, false));
+        int i = rand() % (numVertices - 1);
+        int j = i + (1 + rand() % (numVertices - i - 1));
+
+        cout << endl << "i: " << i << " j: " << j;
+
+        // Copia pai[i:j] para filho[i:j] e atualiza a lista de vértices contidos em filho
+        for(int k = i; k <= j; k++){
+            filhos[0][k] = pais[0][k];
+            filhoContem[0][pais[0][k]] = true;
+            filhos[1][k] = pais[1][k];
+            filhoContem[1][pais[1][k]] = true;
+        }
+        
+        for(int v = 0; v < 2; v++){
+            int index = (j+1) % numVertices;
+            int outro = (v+1) % 2;
+            inicializaListaIndices(indicesPais[outro], pais[outro]);
+            while (index != i) {
+                int cidade = pais[outro][index];
+                while(filhoContem[v][cidade]){
+                    int aux = indicesPais[outro][cidade];
+                    cidade = pais[outro][(aux+1) % numVertices];
+                }
+                filhos[v][index] = cidade;
+                filhoContem[v][cidade] = true;
+                index = (index + 1) % numVertices;
+            }
+        }
+
+        return filhos;
+    }
+
+    // Inicializa a lista de posições aleatórias para serem utilizadas no POS.
+    // O tamanho da lista é aleatório, mas contém no máximo (numVertices/2) elementos.
+    void inicializaListaPosicoes(vector<int> &listaPosicoes){
+        listaPosicoes = vector<int>(0);
+        vector<int> posicoesDiponiveis;
+        for(int i = 0; i < numVertices; i++){
+            posicoesDiponiveis.push_back(i);
+        }
+        int n = rand() % (int)(numVertices/2);
+
+        for(int i = 0; i < n; i++){
+            int idxRandom = rand() % posicoesDiponiveis.size();
+            listaPosicoes.push_back(posicoesDiponiveis[idxRandom]);
+            remover<int>(idxRandom, posicoesDiponiveis);
+        }
+    }
+
+    // Aplica a operação de Position Based Crossover (POS) em dois indivíduos pais
+    // para gerar dois filhos.
+    vector<vector<int>> positionBasedCrossover(vector<int> &pai1, vector<int> &pai2){
+        vector<vector<int>> pais{pai1, pai2};
+        vector<vector<int>> filhos(2, vector<int>(numVertices, -1));
+        vector<vector<int>> indicesPais(2, vector<int>(numVertices + 1, -1));
+        vector<int> listaPosicoes;
+
+        inicializaListaPosicoes(listaPosicoes);
+        
+        for(int i = 0; i < 2; i++){
+            inicializaListaIndices(indicesPais[i], pais[i]);
+            filhos[i] = pais[i];
+        }
+
+        cout << endl << "Lista Pos: ";
+        for(int pos: listaPosicoes){
+            cout << pos << " ";
+            filhos[0][pos] = pais[1][pos];
+            filhos[0][indicesPais[0][filhos[0][pos]]] = pais[0][pos];
+            filhos[1][pos] = pais[0][pos];
+            filhos[1][indicesPais[1][filhos[1][pos]]] = pais[1][pos];
+        }
+
+        return filhos;
+    }
+
     // Aplica o algoritmo genético para o PCV.
     // #######################################################
     // TODO: falar sobre os parametros
     // #######################################################
     float solveAlgoritmoGenetico(int tamPopulacao, float taxaSelecao, float taxaMutacao, int maxIteracoes){
         vector<vector<int>> populacao(tamPopulacao, vector<int>(numVertices));
+        vector<vector<int>> filhos(2);
         vector<float> fitness(tamPopulacao);
         unsigned int geracao;
         int tamPopulacaoReproducao = ceil(tamPopulacao*taxaSelecao);
@@ -282,6 +433,26 @@ public:
         // #######################################################
         for (geracao = 0; geracao < maxIteracoes; geracao++) {
             selecaoRoleta(populacao, tamPopulacaoReproducao, fitness);
+
+            int x1 = rand() % tamPopulacaoReproducao, x2 = rand() % tamPopulacaoReproducao;
+            cout << endl << "pai 0: ";
+            printCaminho(populacao[x1]);
+            cout << endl << "pai 1: ";
+            printCaminho(populacao[x2]);
+
+            cout  << endl << "OX1";
+            filhos = orderCrossover(populacao[x1], populacao[x2]);
+            for(int i = 0; i < 2; i++){
+                cout << endl << "filho " << i << ": ";
+                printCaminho(filhos[i]);
+            }
+
+            cout  << endl << "POS";
+            filhos = positionBasedCrossover(populacao[x1], populacao[x2]);
+            for(int i = 0; i < 2; i++){
+                cout << endl << "filho " << i << ": ";
+                printCaminho(filhos[i]);
+            }
         }
         // for (int i = 0; i < fitness.size(); i++) {
         //     cout << i << ": "<< fitness[i] << endl;
@@ -412,7 +583,8 @@ int main(int argc, char **argv)
     clock_t tempoInicial = clock();
     cout << "Executando..." << endl;
 
-    pcvSolver.setSeed(1000);
+    // pcvSolver.setSeed(1000);
+    pcvSolver.setSeed(time(NULL));
     resultado = pcvSolver.solveAlgoritmoGenetico(20, 0.25, 0.05, 1);
 
     clock_t tempoFinal = clock();
