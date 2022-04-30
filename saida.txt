@@ -1,0 +1,49 @@
+Utilizando os seguintes parâmetros:
+Tamanho da população: 20
+Taxa de Mutação: 0.1
+Operação de Crossover: POS
+Máximo de Iterações: 1000
+
+Geração 0: 4574.04
+Geração 1: 4508.18
+Geração 2: 4462.76
+Geração 3: 4431.43
+Geração 4: 4404.1
+Geração 5: 4369.48
+Geração 6: 4358.07
+Geração 7: 4332.65
+Geração 8: 4311.42
+Geração 9: 4292.27
+Geração 10: 4262.18
+Geração 11: 4244.35
+Geração 12: 4219.7
+Geração 13: 4193.92
+Geração 14: 4176.26
+Geração 15: 4159.31
+Geração 16: 4144.69
+Geração 17: 4131.5
+Geração 18: 4119.63
+Geração 19: 4111.2
+Geração 20: 4103.44
+Geração 21: 4093.28
+Geração 22: 4086.38
+Geração 23: 4080.28
+Geração 24: 4070.53
+Geração 25: 4064.87
+Geração 26: 4059.24
+Geração 27: 4055.35
+Geração 28: 4048.45
+Geração 29: 4042.82
+Geração 30: 4033.34
+Geração 31: 4027.99
+Geração 32: 4018.36
+Geração 33: 4013.36
+Geração 34: 4008.38
+Geração 35: 4003.46
+Geração 36: 4003.46
+Geração 37: 4003.46
+Geração 38: 4003.46
+Geração 39: 4003.46
+Geração 40: 4003.46
+Resultado Obtido: 4003.46
+Tempo: 2.10129s
