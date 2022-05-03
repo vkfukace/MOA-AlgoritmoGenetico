@@ -372,15 +372,6 @@ public:
         int i;
         double somaAtual = 0;
         double porcentagemAtual;
-<<<<<<< HEAD
-        cout << "#####################" << endl;
-        cout << "size: " << fitness.size() << endl;
-        cout << "random: " << random << endl;
-        for(i = 0; i < fitness.size(); i++){
-            // 
-            somaAtual += 1 - (fitness[i] / somaDistancias);
-            cout << "i " << i << ": " << somaAtual << endl;
-=======
         // cout << "#####################" << endl;
         // cout << "size: " << fitness.size() << endl;
         // cout << "random: " << random << endl;
@@ -389,7 +380,6 @@ public:
             // Ou seja, os menores caminhos têm mais chances de serem escolhidos
             somaAtual += 1 - (fitness[i] / somaDistancias);
             // cout << "i " << i << ": " << somaAtual << endl;
->>>>>>> 47d88c6bd719f19f5882bb9f556fcc66cf858036
             if (random < somaAtual) break;
         }
         // cout << "escolhido: " << i << endl;
@@ -403,33 +393,19 @@ public:
         remover<vector<int>>(idxSorteado, populacao);
     }
 
-<<<<<<< HEAD
-    // Retorna os k indivíduos da população que participarão na criação 
-    // da próxima geração.
-    vector<vector<int>> selecaoRoleta(vector<vector<int>> populacao, int k, vector<float> fitness){
-        vector<vector<int>> populacaoSelecionada(0);
-=======
     // Retorna os índices dos k indivíduos da população que participarão na criação 
     // da próxima geração.
     vector<int> selecaoRoleta(vector<vector<int>> populacao, int k, vector<float> fitness){
         vector<int> idxsSelecionados(0);
->>>>>>> 47d88c6bd719f19f5882bb9f556fcc66cf858036
         float somaDistancias = somaDistanciasPopulacao(fitness);
         int idxSorteado;
 
         for(int i = 0; i < k; i++){
             idxSorteado = resultadoRoleta(somaDistancias, fitness);
-<<<<<<< HEAD
-            populacaoSelecionada.push_back(populacao[idxSorteado]);
-            atualizaRoleta(idxSorteado, somaDistancias, populacao, fitness);
-        }
-        return populacaoSelecionada;
-=======
             idxsSelecionados.push_back(idxSorteado);
             atualizaRoleta(idxSorteado, somaDistancias, populacao, fitness);
         }
         return idxsSelecionados;
->>>>>>> 47d88c6bd719f19f5882bb9f556fcc66cf858036
     }
 
     // Guarda os índices dos elementos de caminho em indices.
@@ -634,14 +610,8 @@ public:
     // #######################################################
     // TODO: falar sobre os parametros
     // #######################################################
-<<<<<<< HEAD
-    float solveAlgoritmoGenetico(int tamPopulacao, float taxaSelecao, float taxaMutacao, int maxIteracoes){
-        vector<vector<int>> populacao(tamPopulacao, vector<int>(numVertices)), populacaoReproducao(0);
-        vector<vector<int>> filhos(2);
-=======
     float solveAlgoritmoGenetico(int tamPopulacao, float taxaMutacao, int operacaoCrossover, int maxIteracoes, string nomeArqSaida){
         vector<vector<int>> populacao(tamPopulacao, vector<int>(numVertices)), filhos;
->>>>>>> 47d88c6bd719f19f5882bb9f556fcc66cf858036
         vector<float> fitness(tamPopulacao);
         melhorResultado = INF_POS;
         int tamPopulacaoReproducao = ceil(tamPopulacao*0.3);
@@ -659,34 +629,6 @@ public:
         arq << "Máximo de Iterações: " << maxIteracoes << endl << endl;
 
         gerarPopulacaoInicial(populacao, fitness);
-<<<<<<< HEAD
-        // #######################################################
-        // TODO: adicionar outro criterio de parada
-        // #######################################################
-        for (geracao = 0; geracao < maxIteracoes; geracao++) {
-            populacaoReproducao = selecaoRoleta(populacao, tamPopulacaoReproducao, fitness);
-
-            int x1 = rand() % tamPopulacaoReproducao, x2 = rand() % tamPopulacaoReproducao;
-            cout << "x1: " << x1 << " x2: " << x2 << endl;
-            cout << endl << "pai 0: ";
-            printCaminho(populacaoReproducao[x1]);
-            cout << endl << "pai 1: ";
-            printCaminho(populacaoReproducao[x2]);
-
-            cout  << endl << "OX1";
-            filhos = orderCrossover(populacaoReproducao[x1], populacaoReproducao[x2]);
-            for(int i = 0; i < 2; i++){
-                cout << endl << "filho " << i << ": ";
-                printCaminho(filhos[i]);
-            }
-
-            cout  << endl << "POS";
-            filhos = positionBasedCrossover(populacaoReproducao[x1], populacaoReproducao[x2]);
-            for(int i = 0; i < 2; i++){
-                cout << endl << "filho " << i << ": ";
-                printCaminho(filhos[i]);
-            }
-=======
         atualizaMelhorResultado(populacao, fitness);
 
         for (int geracao = 0; geracao < maxIteracoes and iterSemMelhora < maxIterSemMelhora; geracao++) {
@@ -700,7 +642,6 @@ public:
 
             arq << "Geração " << geracao << ": " << melhorResultado << endl;
             cout << "Geração " << geracao << ": " << melhorResultado << endl;
->>>>>>> 47d88c6bd719f19f5882bb9f556fcc66cf858036
         }
 
         clock_t tempoFinal = clock();
