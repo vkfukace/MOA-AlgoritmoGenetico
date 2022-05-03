@@ -728,6 +728,7 @@ void testes(PCVSolver &pcvSolver){
     vector<int> tamanhosPopulacao = {10, 25, 50}, operadoresCrossover = {ORDER_CROSSOVER, CYCLE_CROSSOVER};
     vector<float> taxasMutacao = {0.0, 0.1, 0.2};
     int maxIteracoes = 1000;
+    string nomeBase = pcvSolver.getArqSaida();
 
     cout << "Iniciando Testes" << endl << endl;
     for(int tamPopulacao: tamanhosPopulacao){
@@ -738,7 +739,7 @@ void testes(PCVSolver &pcvSolver){
                 cout << "Taxa de Mutação: " << taxaMutacao << endl;
                 cout << "Operação de Crossover: " << (operacaoCrossover == 1 ? "CX" : "OX1") << endl;
                 cout << "Máximo de Iterações: " << maxIteracoes << endl << endl;
-                string nomeArqSaida = pcvSolver.getArqSaida() + "_" + to_string(tamPopulacao) + "_" + to_string(taxaMutacao) + "_";
+                string nomeArqSaida = nomeBase + "_" + to_string(tamPopulacao) + "_" + to_string(taxaMutacao) + "_";
                 nomeArqSaida = nomeArqSaida + (operacaoCrossover == 1 ? "CX" : "OX1") + ".txt";
                 pcvSolver.setArqSaida(nomeArqSaida);
                 float resultado = pcvSolver.solveAlgoritmoGenetico(tamPopulacao, taxaMutacao, operacaoCrossover, maxIteracoes);
@@ -771,6 +772,7 @@ int main(int argc, char **argv)
             case 'i': 
                 entradaPorArquivo = true;
                 nomeArqEntrada = optarg;
+                cout << "arqEntrada: " << nomeArqEntrada << endl;
                 break;
             case 'o': 
                 nomeArqSaida = optarg;
