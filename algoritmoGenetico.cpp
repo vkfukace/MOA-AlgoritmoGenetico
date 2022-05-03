@@ -766,13 +766,11 @@ int main(int argc, char **argv)
     // Pegar argumentos da linha de comando
     while((opt = getopt(argc, argv, "i:o:p:m:n:c:s:t")) != -1) 
     { 
-        cout << "opt: " << opt << endl; 
         switch(opt) 
         {
             case 'i': 
                 entradaPorArquivo = true;
                 nomeArqEntrada = optarg;
-                cout << "arqEntrada: " << nomeArqEntrada << endl;
                 break;
             case 'o': 
                 nomeArqSaida = optarg;
