@@ -282,18 +282,19 @@ public:
     }
 
     // Retorna o índice do indivíduo que foi sorteado na roleta
-    int resultadoRoleta(float random, float somaDistancias, vector<float> &fitness){
+    int resultadoRoleta(float somaDistancias, vector<float> &fitness){
+        float random = ((double) rand() / (RAND_MAX)) * (fitness.size() - 1);
         int i;
-        float somaAtual = 0;
-        float porcentagemAtual;
-        // cout << "#####################" << endl;
-        // cout << "size: " << fitness.size() << endl;
-        // cout << "random: " << random << endl;
+        double somaAtual = 0;
+        double porcentagemAtual;
+        cout << "#####################" << endl;
+        cout << "size: " << fitness.size() << endl;
+        cout << "random: " << random << endl;
         for(i = 0; i < fitness.size(); i++){
-            somaAtual += fitness[i];
-            porcentagemAtual = somaAtual/somaDistancias;
-            // cout << "i " << i << ": " << porcentagemAtual << endl;
-            if (random < porcentagemAtual) break;
+            // 
+            somaAtual += 1 - (fitness[i] / somaDistancias);
+            cout << "i " << i << ": " << somaAtual << endl;
+            if (random < somaAtual) break;
         }
         // cout << "escolhido: " << i << endl;
         return i;
@@ -306,21 +307,19 @@ public:
         remover<vector<int>>(idxSorteado, populacao);
     }
 
-    // Seleciona os k indivíduos da população que participarão na criação 
-    // da próxima geração e os guarda em populacao.
-    void selecaoRoleta(vector<vector<int>> &populacao, int k, vector<float> &fitness){
+    // Retorna os k indivíduos da população que participarão na criação 
+    // da próxima geração.
+    vector<vector<int>> selecaoRoleta(vector<vector<int>> populacao, int k, vector<float> fitness){
         vector<vector<int>> populacaoSelecionada(0);
         float somaDistancias = somaDistanciasPopulacao(fitness);
-        float random; // Recebe valores entre 0 e 1
         int idxSorteado;
 
         for(int i = 0; i < k; i++){
-            random = ((float) rand() / (RAND_MAX));
-            idxSorteado = resultadoRoleta(random, somaDistancias, fitness);
+            idxSorteado = resultadoRoleta(somaDistancias, fitness);
             populacaoSelecionada.push_back(populacao[idxSorteado]);
             atualizaRoleta(idxSorteado, somaDistancias, populacao, fitness);
         }
-        populacao = populacaoSelecionada;
+        return populacaoSelecionada;
     }
 
     // Guarda os índices dos elementos de caminho em indices.
@@ -421,7 +420,7 @@ public:
     // TODO: falar sobre os parametros
     // #######################################################
     float solveAlgoritmoGenetico(int tamPopulacao, float taxaSelecao, float taxaMutacao, int maxIteracoes){
-        vector<vector<int>> populacao(tamPopulacao, vector<int>(numVertices));
+        vector<vector<int>> populacao(tamPopulacao, vector<int>(numVertices)), populacaoReproducao(0);
         vector<vector<int>> filhos(2);
         vector<float> fitness(tamPopulacao);
         unsigned int geracao;
@@ -432,23 +431,24 @@ public:
         // TODO: adicionar outro criterio de parada
         // #######################################################
         for (geracao = 0; geracao < maxIteracoes; geracao++) {
-            selecaoRoleta(populacao, tamPopulacaoReproducao, fitness);
+            populacaoReproducao = selecaoRoleta(populacao, tamPopulacaoReproducao, fitness);
 
             int x1 = rand() % tamPopulacaoReproducao, x2 = rand() % tamPopulacaoReproducao;
+            cout << "x1: " << x1 << " x2: " << x2 << endl;
             cout << endl << "pai 0: ";
-            printCaminho(populacao[x1]);
+            printCaminho(populacaoReproducao[x1]);
             cout << endl << "pai 1: ";
-            printCaminho(populacao[x2]);
+            printCaminho(populacaoReproducao[x2]);
 
             cout  << endl << "OX1";
-            filhos = orderCrossover(populacao[x1], populacao[x2]);
+            filhos = orderCrossover(populacaoReproducao[x1], populacaoReproducao[x2]);
             for(int i = 0; i < 2; i++){
                 cout << endl << "filho " << i << ": ";
                 printCaminho(filhos[i]);
             }
 
             cout  << endl << "POS";
-            filhos = positionBasedCrossover(populacao[x1], populacao[x2]);
+            filhos = positionBasedCrossover(populacaoReproducao[x1], populacaoReproducao[x2]);
             for(int i = 0; i < 2; i++){
                 cout << endl << "filho " << i << ": ";
                 printCaminho(filhos[i]);

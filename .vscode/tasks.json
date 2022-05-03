@@ -27,9 +27,9 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "./${fileBasename}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "./${fileBasenameNoExtension}"
             ],
             "options": {
                 "cwd": "${fileDirname}"
