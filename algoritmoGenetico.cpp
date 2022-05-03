@@ -11,7 +11,7 @@
 using namespace std;
 
 #define INF_POS std::numeric_limits<float>::max()
-#define POSITION_BASED_CROSSOVER 1
+#define CYCLE_CROSSOVER 1
 #define ORDER_CROSSOVER 2
 
 class Vertice
@@ -46,6 +46,7 @@ private:
     vector<int> melhorCaminho;
     float melhorResultado;
     unsigned int seed; // Seed utilizado para operações com rand()
+    string nomeArqSaida;
 
 public:
     // Inicializa a classe com a lista e a quantidade de vértices
@@ -64,6 +65,15 @@ public:
         return sqrt((deltaX * deltaX) + (deltaY * deltaY));
     }
 
+    // Retorna a distância ao quadrado entre os vértices v1 e v2.
+    float distanciaQuadrado(Vertice v1, Vertice v2)
+    {
+        float deltaX = v2.x - v1.x;
+        float deltaY = v2.y - v1.y;
+
+        return deltaX * deltaX + deltaY * deltaY;
+    }
+
     // Retorna a distância percorrida pelo caminho inteiro.
     float distanciaCaminho(vector<int> &caminho)
     {
@@ -77,6 +87,7 @@ public:
         return distanciaTotal;
     }
 
+    // Função de Teste
     // Imprime todos os vértices do caminho
     void printCaminho(vector<int> &caminho)
     {
@@ -87,6 +98,7 @@ public:
         cout << caminho[0] << endl;
     }
 
+    // Função de Teste
     // Imprime as coordenadas de todos os vértices na tela
     void printVertices()
     {
@@ -97,6 +109,7 @@ public:
         cout << endl;
     }
 
+    // Função de Teste
     // Imprime os fitness de todos os indivíduos da população
     void printFitness(vector<float> &fitness)
     {
@@ -107,6 +120,7 @@ public:
         cout << endl;
     }
 
+    // Função de Teste
     void caminhoValido(vector<int> &caminho){
         vector<bool> visitado(numVertices+1, false);
         int verticeAtual;
@@ -115,14 +129,15 @@ public:
             if(!visitado[verticeAtual])
                 visitado[verticeAtual] = true;
             else
-                cout << "Vertice " << verticeAtual << "duplicado, indice:" << i << endl;
+                cout << "Vertice " << verticeAtual << " duplicado, indice:" << i << endl;
         }
         for(int i = 1; i < numVertices + 1; i++){
             if(!visitado[i])
-                cout << "Vertice " << i << "nao foi adicionado" << endl;
+                cout << "Vertice " << i << " nao foi adicionado" << endl;
         }
     }
 
+    // Função de Teste
     void populacaoValida(vector<vector<int>> &populacao){
         for(int i = 0; i< populacao.size(); i++){
             cout << "Validando " << i << endl;
@@ -130,10 +145,28 @@ public:
         }
     }
 
+    // Função de Teste
+    void verificarFitness(vector<vector<int>> &populacao, vector<float> &fitness){
+        cout << "\tTESTE FITNESS" << endl;
+        for(int i = 0; i < fitness.size(); i++){
+            cout << "fitness " << i << ": " << fitness[i];
+            cout << " | distancia " << i << ": " << distanciaCaminho(populacao[i]) << endl;
+        }
+    }
+
     // Define a seed utilizada em operações aleatórias
     void setSeed(unsigned int seed) {
         PCVSolver::seed = seed;
         srand(seed);
+    }
+
+    // Define o nome do arquivo de saída
+    void setArqSaida(string arqSaida){
+        nomeArqSaida = arqSaida;
+    }
+
+    string getArqSaida(){
+        return nomeArqSaida;
     }
 
     // Retorna o índice do vizinho mais próximo de verticeAtual
@@ -186,79 +219,6 @@ public:
         distanciaRetorno = distanciaCaminho(caminhoRetorno);
     }
 
-    float calculoCustoInsercao(vector<int> &ciclo, int i, int j, int k)
-    {
-        float d_ik = distancia(vertices[i], vertices[k]);
-        float d_kj = distancia(vertices[k], vertices[j]);
-        float d_ij = distancia(vertices[i], vertices[j]);
-        return d_ik + d_kj - d_ij;
-    }
-
-    // Aplica o algoritmo random insertion para o PCV.
-    // Retorna o caminho gerado em caminhoRetorno, e a distância do caminho em distanciaRetorno.
-    void solveRandomInsertion(vector<int> &caminhoRetorno, float &distanciaRetorno)
-    {
-        // Inicializa a lista de vértices disponíveis.
-        vector<int> idxVerticesDisponiveis;
-        for (int i = 1; i <= numVertices; i++)
-            idxVerticesDisponiveis.push_back(i);
-        int numVerticesDisponiveis = (int)idxVerticesDisponiveis.size();
-
-        // Inicializa o ciclo vazio.
-        // proxCiclo funciona de forma diferente de melhorCaminho.
-        // No melhorCaminho, o elemento após melhorCaminho[i] é melhorCaminho[i+1],
-        // no proxCiclo, o elemento após proxCiclo[i] é proxCiclo[proxCiclo[i]].
-        vector<int> proxCiclo(numVertices + 1, -1);
-
-        // Escolhe vértice inicial aleatório.
-        int idxRandom = rand() % numVerticesDisponiveis;
-        int verticeInicial = idxVerticesDisponiveis[idxRandom];
-        remover<int>(idxRandom, idxVerticesDisponiveis);
-        numVerticesDisponiveis--;
-
-        // Define um ciclo inicial com um único vértice.
-        proxCiclo[verticeInicial] = verticeInicial;
-        int tamanhoCiclo = 1;
-
-        while (numVerticesDisponiveis > 0)
-        {
-            // Escolhe outro vértice aleatório, chamado k.
-            idxRandom = rand() % numVerticesDisponiveis;
-            int k = idxVerticesDisponiveis[idxRandom];
-            numVerticesDisponiveis--;
-            remover<int>(idxRandom, idxVerticesDisponiveis);
-
-            int i = verticeInicial, j, iInsercao, jInsercao;
-            float melhorCustoInsercao = INF_POS;
-            // Busca todas as arestas (i, j) do ciclo, e escolhe aquela com o menor custo de inserção de k.
-            for (int cont = 0; cont < tamanhoCiclo; cont++)
-            {
-                j = proxCiclo[i];
-                float custoInsercao = calculoCustoInsercao(proxCiclo, i, j, k);
-                if (custoInsercao < melhorCustoInsercao)
-                {
-                    iInsercao = i;
-                    jInsercao = j;
-                    melhorCustoInsercao = custoInsercao;
-                }
-                i = j;
-            }
-            proxCiclo[k] = jInsercao;
-            proxCiclo[iInsercao] = k;
-            tamanhoCiclo++;
-        }
-
-        // Transfere o ciclo para o caminhoRetorno, e calcula a distância
-        int i = verticeInicial;
-        caminhoRetorno = vector<int>(0);
-        for (int cont = 0; cont < tamanhoCiclo; cont++)
-        {
-            caminhoRetorno.push_back(i);
-            i = proxCiclo[i];
-        }
-        distanciaRetorno = distanciaCaminho(caminhoRetorno);
-    }
-
     // Calcula a diferença entre as distâncias do caminho antes
     // e depois da operação de troca 2-opt entre os vértices
     // (caminho[i-1], caminho[i]) e (caminho[j], caminho[j+1]).
@@ -267,7 +227,7 @@ public:
     // Presume que i < j.
     float diferencaTroca2Opt(vector<int> &caminho, int i, int j)
     {
-        int iMenos = (numVertices + ((i - 1) % numVertices)) % numVertices;
+        int iMenos = (i - 1) % numVertices;
         int jMais = (j + 1) % numVertices;
         float antes1 = distancia(vertices[caminho[i]], vertices[caminho[iMenos]]);
         float antes2 = distancia(vertices[caminho[j]], vertices[caminho[jMais]]);
@@ -277,10 +237,28 @@ public:
         return (depois1 + depois2) - (antes1 + antes2);
     }
 
+    // Retorna true se a troca 2-opt entre os vértices
+    // (caminho[i-1], caminho[i]) e (caminho[j], caminho[j+1])
+    // resulta em uma redução da distância.
+    // Retorna false caso contrário.
+    // Esta função pode parecer redundante, mas melhorou o tempo de execução do algoritmo.
+    // Isso ocorre pois a raíz quadrada das distâncias não estãp sendo calculadas.
+    bool trocaMelhora(vector<int> &caminho, int i, int j){
+        int iMenos = (i - 1) % numVertices;
+        int jMais = (j + 1) % numVertices;
+        float antes1 = distanciaQuadrado(vertices[caminho[i]], vertices[caminho[iMenos]]);
+        float antes2 = distanciaQuadrado(vertices[caminho[j]], vertices[caminho[jMais]]);
+        float depois1 = distanciaQuadrado(vertices[caminho[iMenos]], vertices[caminho[j]]);
+        float depois2 = distanciaQuadrado(vertices[caminho[i]], vertices[caminho[jMais]]);
+
+        return (depois1 + depois2) < (antes1 + antes2);
+    }
+
     // Realiza a troca 2-opt no caminho dado.
     // Faz a troca dos vértices (caminho[i-1], caminho[i]) e
     // (caminho[j], caminho[j+1]), através da inversão dos
     // elementos de caminho[i] até caminho[j].
+    // Presume que i < j.
     void trocar2Opt(vector<int> &caminho, int i, int j)
     {
         while (i < j)
@@ -304,13 +282,15 @@ public:
         {
             for (j = i + 1; j < numVertices; j++)
             {
-                diferencaDistancia = diferencaTroca2Opt(caminhoInicial, i, j);
-                // Se a troca resulta em uma redução da distância
-                if (diferencaDistancia < melhorDiferencaDistancia)
+                if(trocaMelhora(caminhoInicial, i, j))
                 {
-                    melhor_i = i;
-                    melhor_j = j;
-                    melhorDiferencaDistancia = diferencaDistancia;
+                    diferencaDistancia = diferencaTroca2Opt(caminhoInicial, i, j);
+                    if (diferencaDistancia < melhorDiferencaDistancia)
+                    {
+                        melhor_i = i;
+                        melhor_j = j;
+                        melhorDiferencaDistancia = diferencaDistancia;
+                    }
                 }
             }
         }
@@ -372,17 +352,12 @@ public:
         int i;
         double somaAtual = 0;
         double porcentagemAtual;
-        // cout << "#####################" << endl;
-        // cout << "size: " << fitness.size() << endl;
-        // cout << "random: " << random << endl;
         for(i = 0; i < fitness.size(); i++){
             // 1 - (fitness[i] / somaDistancias) é inversamente proporcional à distância do caminho i. 
             // Ou seja, os menores caminhos têm mais chances de serem escolhidos
             somaAtual += 1 - (fitness[i] / somaDistancias);
-            // cout << "i " << i << ": " << somaAtual << endl;
             if (random < somaAtual) break;
         }
-        // cout << "escolhido: " << i << endl;
         return i;
     }
 
@@ -420,16 +395,14 @@ public:
 
     // Aplica a operação de Order Crossover (OX1) em dois indivíduos pais
     // para gerar dois filhos.
-    vector<vector<int>> orderCrossover(vector<int> &pai1, vector<int> &pai2){
-        vector<vector<int>> pais{pai1, pai2};
+    vector<vector<int>> orderCrossover(vector<int> &pai0, vector<int> &pai1){
+        vector<vector<int>> pais{pai0, pai1};
         vector<vector<int>> filhos(2, vector<int>(numVertices, -1));
         // indicesPais[0][3] contém o índice do vértice 3 no pai 0
         vector<vector<int>> indicesPais(2, vector<int>(numVertices + 1, -1));
         vector<vector<bool>> filhoContem(2, vector<bool>(numVertices + 1, false));
         int i = rand() % (numVertices - 1);
         int j = i + (1 + rand() % (numVertices - i - 1));
-
-        // cout << "i: " << i << " j: " << j << endl;
 
         // Copia pai[i:j] para filho[i:j] e atualiza a lista de vértices contidos em filho
         for(int k = i; k <= j; k++){
@@ -458,7 +431,7 @@ public:
         return filhos;
     }
     
-    // Realiza a operação de cruzamento, utilizando o operador de cruzamento Position Based Crossover (POS)
+    // Realiza a operação de cruzamento, utilizando o operador de cruzamento Order Crossover (OX1)
     // Guarda a população de indivíduos filhos na variável filhos.
     void cruzamentoOX1(vector<vector<int>> &populacao, vector<int> &idxsReproducao, vector<vector<int>> &filhos){
         filhos = vector<vector<int>>(0);
@@ -474,53 +447,30 @@ public:
         }
     }
 
-    // Inicializa a lista de posições aleatórias para serem utilizadas no Position Based Crossover.
-    // O tamanho da lista é aleatório, mas contém no máximo (numVertices/2) elementos.
-    void inicializaListaPosicoes(vector<int> &listaPosicoes){
-        listaPosicoes = vector<int>(0);
-        vector<int> posicoesDiponiveis;
-        for(int i = 0; i < numVertices; i++){
-            posicoesDiponiveis.push_back(i);
-        }
-        int n = rand() % (int)(numVertices/2);
-
-        for(int i = 0; i < n; i++){
-            int idxRandom = rand() % posicoesDiponiveis.size();
-            listaPosicoes.push_back(posicoesDiponiveis[idxRandom]);
-            remover<int>(idxRandom, posicoesDiponiveis);
-        }
-    }
-
-    // Aplica a operação de Position Based Crossover (POS) em dois indivíduos pais
+    // Aplica a operação de Cycle Crossover (CX) em dois indivíduos pais
     // para gerar dois filhos.
-    vector<vector<int>> positionBasedCrossover(vector<int> &pai1, vector<int> &pai2){
-        vector<vector<int>> pais{pai1, pai2};
-        vector<vector<int>> filhos(2, vector<int>(numVertices, -1));
+    vector<vector<int>> cycleCrossover(vector<int> &pai0, vector<int> &pai1){
+        vector<vector<int>> pais = {pai0, pai1};
+        vector<vector<int>> filhos(2);
         vector<vector<int>> indicesPais(2, vector<int>(numVertices + 1, -1));
-        vector<int> listaPosicoes;
-
-        inicializaListaPosicoes(listaPosicoes);
         
         for(int i = 0; i < 2; i++){
-            inicializaListaIndices(indicesPais[i], pais[i]);
-            filhos[i] = pais[i];
-        }
-
-        // cout << endl << "Lista Pos: ";
-        for(int pos: listaPosicoes){
-            // cout << pos << " ";
-            filhos[0][pos] = pais[1][pos];
-            filhos[0][indicesPais[0][filhos[0][pos]]] = pais[0][pos];
-            filhos[1][pos] = pais[0][pos];
-            filhos[1][indicesPais[1][filhos[1][pos]]] = pais[1][pos];
+            int outro = (i+1) % 2;
+            filhos[i] = pais[outro];
+            inicializaListaIndices(indicesPais[outro], pais[outro]);
+            int index = 0;
+            do{
+                filhos[i][index] = pais[i][index]; 
+                index = indicesPais[outro][filhos[i][index]];
+            }while (index != 0);
         }
 
         return filhos;
     }
 
-    // Realiza a operação de cruzamento, utilizando o operador de cruzamento Position Based Crossover (POS)
+    // Realiza a operação de cruzamento, utilizando o operador de cruzamento Cycle Crossover (CX)
     // Guarda a população de indivíduos filhos na variável filhos.
-    void cruzamentoPOS(vector<vector<int>> &populacao, vector<int> &idxsReproducao, vector<vector<int>> &filhos){
+    void cruzamentoCX(vector<vector<int>> &populacao, vector<int> &idxsReproducao, vector<vector<int>> &filhos){
         filhos = vector<vector<int>>(0);
         vector<vector<int>> resultado;
         int x1, x2;
@@ -529,8 +479,7 @@ public:
             do {
                 x2 = rand() % idxsReproducao.size();
             } while (x2 == x1);
-            // cout << "x1: " << x1 << " x2: " << x2 << endl;
-            resultado = positionBasedCrossover(populacao[idxsReproducao[x1]], populacao[idxsReproducao[x2]]);
+            resultado = cycleCrossover(populacao[idxsReproducao[x1]], populacao[idxsReproducao[x2]]);
             filhos.push_back(resultado[0]);
             filhos.push_back(resultado[1]);
         }
@@ -539,19 +488,19 @@ public:
     // Realiza a operação de cruzamento, utilizando os indivíduos cujos índices pertencem a idxsReproducao.
     // Guarda a população de indivíduos filhos na variável filhos.
     // operacao pode receber um de dois valores:
-    // - POSITION_BASED_CROSSOVER
+    // - CYCLE_CROSSOVER
     // - ORDER_CROSSOVER
-    // Caso não possua um destes valores, recebe POSITION_BASED_CROSSOVER por padrão;
+    // Caso não possua um destes valores, recebe CYCLE_CROSSOVER por padrão;
     void cruzamento(vector<vector<int>> &populacao, vector<int> &idxsReproducao, vector<vector<int>> &filhos, int operacao){
         switch(operacao){
-            case POSITION_BASED_CROSSOVER:
-                cruzamentoPOS(populacao, idxsReproducao, filhos);
+            case CYCLE_CROSSOVER:
+                cruzamentoCX(populacao, idxsReproducao, filhos);
                 break;
             case ORDER_CROSSOVER:
                 cruzamentoOX1(populacao, idxsReproducao, filhos);
                 break;
             default:
-                cruzamentoPOS(populacao, idxsReproducao, filhos);
+                cruzamentoCX(populacao, idxsReproducao, filhos);
         }
     }
 
@@ -588,11 +537,13 @@ public:
         for(int x = 0; x < populacao.size(); x++){
             float random =  ((float) rand() / (RAND_MAX));
             if(random <= taxaMutacao){
-                // cout << "Mutacao em " << x << endl;
-                int i = rand() % (numVertices - 1);
-                int j = i + (1 + rand() % (numVertices - i - 1));
-                fitness[x] += diferencaTroca2Opt(populacao[x], i, j);
-                trocar2Opt(populacao[x], i, j);
+                int numTrocas = 1 + rand()%5;
+                for(int y=0; y<numTrocas; y++){
+                    int i = 1 + rand() % (numVertices - 2);
+                    int j = i + (1 + rand() % (numVertices - i - 1));
+                    fitness[x] += diferencaTroca2Opt(populacao[x], i, j);
+                    trocar2Opt(populacao[x], i, j);
+                }
             }
         }
     }
@@ -610,7 +561,7 @@ public:
     // #######################################################
     // TODO: falar sobre os parametros
     // #######################################################
-    float solveAlgoritmoGenetico(int tamPopulacao, float taxaMutacao, int operacaoCrossover, int maxIteracoes, string nomeArqSaida){
+    float solveAlgoritmoGenetico(int tamPopulacao, float taxaMutacao, int operacaoCrossover, int maxIteracoes){
         vector<vector<int>> populacao(tamPopulacao, vector<int>(numVertices)), filhos;
         vector<float> fitness(tamPopulacao);
         melhorResultado = INF_POS;
@@ -625,13 +576,16 @@ public:
         arq << "Utilizando os seguintes parâmetros:" << endl;
         arq << "Tamanho da população: " << tamPopulacao << endl;
         arq << "Taxa de Mutação: " << taxaMutacao << endl;
-        arq << "Operação de Crossover: " << (operacaoCrossover == 1 ? "POS" : "OX1") << endl;
+        arq << "Operação de Crossover: " << (operacaoCrossover == 1 ? "CX" : "OX1") << endl;
+        arq << "Seed: " << seed << endl;
         arq << "Máximo de Iterações: " << maxIteracoes << endl << endl;
 
         gerarPopulacaoInicial(populacao, fitness);
         atualizaMelhorResultado(populacao, fitness);
+        arq << "Geração 0: " << melhorResultado << endl;
+        arq << "\tTempo: " << (clock() - tempoInicial)/ (float)CLOCKS_PER_SEC << endl;
 
-        for (int geracao = 0; geracao < maxIteracoes and iterSemMelhora < maxIterSemMelhora; geracao++) {
+        for (int geracao = 1; geracao < maxIteracoes and iterSemMelhora < maxIterSemMelhora; geracao++) {
             idxsReproducao = selecaoRoleta(populacao, tamPopulacaoReproducao, fitness);
             cruzamento(populacao, idxsReproducao, filhos, operacaoCrossover);
             manutencaoSteadyStated(populacao, fitness, filhos);
@@ -641,13 +595,14 @@ public:
             resultadoMelhorou ? iterSemMelhora = 0 : iterSemMelhora++;
 
             arq << "Geração " << geracao << ": " << melhorResultado << endl;
+            arq << "\tTempo: " << (clock() - tempoInicial)/ (float)CLOCKS_PER_SEC << endl;
             cout << "Geração " << geracao << ": " << melhorResultado << endl;
         }
 
         clock_t tempoFinal = clock();
         float tempoTotal = (tempoFinal - tempoInicial) / (float)CLOCKS_PER_SEC;
         arq << "Resultado Obtido: " << melhorResultado << endl;
-        arq << "Tempo: " << tempoTotal << "s" << endl;
+        arq << "Tempo de Execução: " << tempoTotal << "s" << endl;
 
         return melhorResultado;
     }
@@ -685,7 +640,7 @@ vector<string> tokenizar(string str)
 
 // Inicializa a lista de vértices utilizando linhas de entrada
 // da linha de comando.
-// Assume que a entrada está formatada de acordo com os exemplos.
+// Presume que a entrada está formatada de acordo com os exemplos.
 // Inicializa a posição 0 da linha de vértices com um vértice vazio.
 void inicializarPorTerminal(vector<Vertice> &listaVertices, int &tamanhoLista)
 {
@@ -713,7 +668,7 @@ void inicializarPorTerminal(vector<Vertice> &listaVertices, int &tamanhoLista)
 }
 
 // Inicializa a lista de vértices utilizando um arquivo
-// Assume que a entrada está formatada de acordo com os exemplos.
+// Presume que a entrada está formatada de acordo com os exemplos.
 // Inicializa a posição 0 da linha de vértices com um vértice vazio.
 // Retorna true caso o arquivo exista, false caso contrário
 bool inicializarPorArquivo(string nomeArquivo, vector<Vertice> &listaVertices, int &tamanhoLista)
@@ -746,6 +701,55 @@ bool inicializarPorArquivo(string nomeArquivo, vector<Vertice> &listaVertices, i
     return true;
 }
 
+// Inicializa a lista de vértices e o tamanho da lista.
+// Caso entradaPorArquivo possua valor true, o arquivo nomeArquivoEntrada é utilizado.
+// Caso contrário, a entrada é feita por terminal.
+void inicializar(vector<Vertice> &listaVertices, int &tamanhoLista, string nomeArquivoEntrada, bool entradaPorArquivo){
+    if (entradaPorArquivo)
+    {
+        if (inicializarPorArquivo(nomeArquivoEntrada, listaVertices, tamanhoLista))
+        {
+            cout << "Inicialização completa" << endl;
+            return;
+        }
+        else
+        {
+            cout << "Erro na leitura do arquivo " << nomeArquivoEntrada << endl;
+        }
+    }
+    
+    cout << "Insira o caso de teste" << endl;
+    inicializarPorTerminal(listaVertices, tamanhoLista);
+    
+    return;
+}
+
+void testes(PCVSolver &pcvSolver){
+    vector<int> tamanhosPopulacao = {10, 25, 50}, operadoresCrossover = {ORDER_CROSSOVER, CYCLE_CROSSOVER};
+    vector<float> taxasMutacao = {0.0, 0.1, 0.2};
+    int maxIteracoes = 1000;
+
+    cout << "Iniciando Testes" << endl << endl;
+    for(int tamPopulacao: tamanhosPopulacao){
+        for(float taxaMutacao: taxasMutacao){
+            for(int operacaoCrossover: operadoresCrossover){
+                cout << "Utilizando os seguintes parâmetros:" << endl;
+                cout << "Tamanho da população: " << tamPopulacao << endl;
+                cout << "Taxa de Mutação: " << taxaMutacao << endl;
+                cout << "Operação de Crossover: " << (operacaoCrossover == 1 ? "CX" : "OX1") << endl;
+                cout << "Máximo de Iterações: " << maxIteracoes << endl << endl;
+                string nomeArqSaida = pcvSolver.getArqSaida() + "_" + to_string(tamPopulacao) + "_" + to_string(taxaMutacao) + "_";
+                nomeArqSaida = nomeArqSaida + (operacaoCrossover == 1 ? "CX" : "OX1") + ".txt";
+                pcvSolver.setArqSaida(nomeArqSaida);
+                float resultado = pcvSolver.solveAlgoritmoGenetico(tamPopulacao, taxaMutacao, operacaoCrossover, maxIteracoes);
+                cout << "Resultado Obtido: ";
+                cout << resultado << endl << endl;
+            }
+        }
+    }
+
+}
+
 int main(int argc, char **argv)
 {
     vector<Vertice> listaVertices;
@@ -753,18 +757,21 @@ int main(int argc, char **argv)
     
     // Valores Padrão
     float resultado, taxaMutacao = 0.15;
-    int tamPopulacao = 30, maxIteracoes = 1000, operacaoCrossover = POSITION_BASED_CROSSOVER;
+    int tamPopulacao = 30, maxIteracoes = 1000, operacaoCrossover = CYCLE_CROSSOVER;
     unsigned int seed = time(NULL);
     string nomeArqEntrada = "", nomeArqSaida = "saida.txt";
+    bool entradaPorArquivo = false, modoTestes = false;
     int opt;
 
     // Pegar argumentos da linha de comando
-    while((opt = getopt(argc, argv, "i:o:p:m:n:c:s:")) != -1) 
+    while((opt = getopt(argc, argv, "i:o:p:m:n:c:s:t")) != -1) 
     { 
         switch(opt) 
         {
             case 'i': 
+                entradaPorArquivo = true;
                 nomeArqEntrada = optarg;
+                cout << "arqEntrada: " << nomeArqEntrada << endl;
                 break;
             case 'o': 
                 nomeArqSaida = optarg;
@@ -781,48 +788,40 @@ int main(int argc, char **argv)
             case 'c': 
                 if(strcmp(optarg, "ox1") == 0 or strcmp(optarg, "OX1") == 0)
                     operacaoCrossover = ORDER_CROSSOVER;
-                else if(strcmp(optarg, "pos") == 0 or strcmp(optarg, "POS") == 0)
-                    operacaoCrossover = POSITION_BASED_CROSSOVER;
+                else if(strcmp(optarg, "cx") == 0 or strcmp(optarg, "CX") == 0)
+                    operacaoCrossover = CYCLE_CROSSOVER;
                 else
-                    cout << "Operacao " << optarg << " invalida, utilizando crossover POS";
+                    cout << "Operacao " << optarg << " invalida, utilizando crossover CX";
                 break;
             case 's': 
                 seed = stoi(optarg);
                 break;
-            case '?': 
-                printf("unknown option: %c\n", optopt);
+            case 't': 
+                modoTestes = true;
+                break;
+            default: 
+                cout << "Opção desconhecida: " << (char)optopt << endl;
                 break; 
         } 
     }
 
-    // Inicialização da lista de vértices
-    if (nomeArqEntrada != "")
-    {
-        if (inicializarPorArquivo(nomeArqEntrada, listaVertices, tamanhoLista))
-        {
-            cout << "Inicialização completa" << endl;
-        }
-        else
-        {
-            cout << "Erro na leitura do arquivo" << endl;
-            return 0;
-        }
-    }
-    else
-    {
-        cout << "Insira o caso de teste" << endl;
-        inicializarPorTerminal(listaVertices, tamanhoLista);
-    }
-
+    inicializar(listaVertices, tamanhoLista, nomeArqEntrada, entradaPorArquivo);
     cout << "Executando..." << endl;
 
     PCVSolver pcvSolver(listaVertices, tamanhoLista);
-    
     pcvSolver.setSeed(seed);
-    resultado = pcvSolver.solveAlgoritmoGenetico(tamPopulacao, taxaMutacao, operacaoCrossover, maxIteracoes, nomeArqSaida);
+    pcvSolver.setArqSaida(nomeArqSaida);
 
-    cout << "Resultado Obtido: ";
-    cout << resultado << "\n";
+    if(modoTestes)
+    {
+        testes(pcvSolver);
+    }
+    else
+    {
+        resultado = pcvSolver.solveAlgoritmoGenetico(tamPopulacao, taxaMutacao, operacaoCrossover, maxIteracoes);
+        cout << "Resultado Obtido: ";
+        cout << resultado << "\n";
+    }
 
     return 0;
 }
