@@ -9,6 +9,8 @@ Felipe Roveroni de Lima - RA112675
 
 ### Execução
 
+Compilar com "g++ algoritmoGenetico.cpp -o algoritmoGenetico"
+
 Comando de execução: "./algoritmoGenetico [-i \<param1\> | -o \<param2\> | -p \<param3\> | -m \<param4\> | -n \<param5\> | -c \<param6\> | -s \<param6\> | -t]"
 
 Descrição dos Argumentos:
